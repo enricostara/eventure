@@ -1,0 +1,28 @@
+[project]
+name = "eventually"
+version = "0.1.0"
+description = "A robust, type-safe event bus implementation with wildcard subscriptions"
+authors = [
+    { name = "Enrico Stara", email = "enrico.stara@gmail.com" }
+]
+dependencies = []
+requires-python = ">=3.12"
+readme = "README.md"
+license = { file = "LICENSE" }
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.9.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+select = ["E", "F", "B", "I", "N", "W", "C90"]
