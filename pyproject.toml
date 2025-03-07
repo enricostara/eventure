@@ -13,16 +13,14 @@ license = { file = "LICENSE" }
 [dependency-groups]
 dev = [
     "pytest>=7.4.0",
-    "pytest-cov>=4.1.0",
     "ruff>=0.9.6",
+    "rust-just>=1.39.0",
 ]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-addopts = "-v"
 
 [tool.ruff]
 target-version = "py312"
 line-length = 95
+indent-width = 4
+
+[tool.ruff.lint]
 select = ["E", "F", "B", "I", "N", "W", "C90"]

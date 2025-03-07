@@ -116,7 +116,8 @@ def test_eventbus_basic_subscription() -> None:
     # Subscribe to an event type
     unsubscribe: Callable[[], None] = bus.subscribe("user.created", handler)
 
-
+    # Publish an event
+    bus.publish("user.created", {"user_id": 1})
 
     # Verify handler was called
     assert len(received_events) == 1

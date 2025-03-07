@@ -204,10 +204,7 @@ class EventBus:
 
         # Return an unsubscribe function
         def unsubscribe():
-            if (
-                event_type in self.subscribers
-                and handler in self.subscribers[event_type]
-            ):
+            if event_type in self.subscribers and handler in self.subscribers[event_type]:
                 self.subscribers[event_type].remove(handler)
 
         return unsubscribe
