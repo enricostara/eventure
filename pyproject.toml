@@ -1,7 +1,7 @@
 [project]
 name = "eventually"
 version = "0.1.0"
-description = "A robust, type-safe event bus implementation with wildcard subscriptions"
+description = "A Python library providing a robust, type-safe event system for game development and simulation."
 authors = [
     { name = "Enrico Stara", email = "enrico.stara@gmail.com" }
 ]
