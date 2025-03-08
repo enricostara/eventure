@@ -1,6 +1,6 @@
-# Eventually
+# Eventick
 
-A Python library providing a robust, type-safe event system for game development and simulation. Eventually offers event tracking, time-based event management, and a powerful event bus with wildcard subscription support.
+A Python library providing a robust, type-safe event system for game development and simulation. Eventick offers event tracking, time-based event management, and a powerful event bus with wildcard subscription support.
 
 ## Features
 
@@ -15,13 +15,13 @@ A Python library providing a robust, type-safe event system for game development
 ## Installation
 
 ```bash
-uv pip install eventually
+uv pip install eventick
 ```
 
 ## Quick Start
 
 ```python
-from eventually import EventBus, EventLog, Event
+from eventick import EventBus, EventLog, Event
 
 # Create an event log to track game state
 event_log = EventLog()
@@ -97,8 +97,8 @@ The `EventBus` handles event publishing and subscription:
 
 ```bash
 # Clone the repository
-git clone https://github.com/enricostara/eventually.git
-cd eventually
+git clone https://github.com/enricostara/eventick.git
+cd eventick
 
 # Install development dependencies
 uv sync --all-extras
