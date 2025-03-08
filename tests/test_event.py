@@ -4,7 +4,7 @@ import tempfile
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List
 
-from eventick import Event, EventBus, EventLog
+from eventure import Event, EventBus, EventLog
 
 
 def test_event_creation() -> None:

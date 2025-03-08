@@ -1,5 +1,5 @@
 """
-Event handling module for Eventually.
+Event handling module for Eventure.
 
 This module provides the core Event and EventBus classes for implementing
 a robust event system with type-safe event handling and wildcard subscriptions.

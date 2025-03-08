@@ -1,6 +1,6 @@
-# Eventick
+# Eventure
 
-A Python library providing a robust, type-safe event system for game development and simulation. Eventick offers event tracking, time-based event management, and a powerful event bus with wildcard subscription support.
+A Python library providing a robust, type-safe event system for game development and simulation. Eventure offers event tracking, time-based event management, and a powerful event bus with wildcard subscription support.
 
 ## Features
 
@@ -15,13 +15,17 @@ A Python library providing a robust, type-safe event system for game development
 ## Installation
 
 ```bash
-uv pip install eventick
+# Using pip
+pip install eventure
+
+# Using uv
+uv add eventure
 ```
 
 ## Quick Start
 
 ```python
-from eventick import EventBus, EventLog, Event
+from eventure import EventBus, EventLog, Event
 
 # Create an event log to track game state
 event_log = EventLog()
@@ -97,8 +101,8 @@ The `EventBus` handles event publishing and subscription:
 
 ```bash
 # Clone the repository
-git clone https://github.com/enricostara/eventick.git
-cd eventick
+git clone https://github.com/enricostara/eventure.git
+cd eventure
 
 # Install development dependencies
 uv sync --all-extras
