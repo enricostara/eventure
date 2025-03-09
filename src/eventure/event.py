@@ -8,9 +8,10 @@ a robust event system with type-safe event handling and wildcard subscriptions.
 import hashlib
 import json
 import re
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Callable, ClassVar, Dict, List, Optional
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Set
 
 
 @dataclass
@@ -265,6 +266,185 @@ class EventLog:
         return sorted(
             cascade, key=lambda e: (e.tick, e.id.split("-")[1], int(e.id.split("-")[2]))
         )
+
+    def print_event_cascade(self, file=sys.stdout, show_data=True) -> None:
+        """Print events organized by tick with clear cascade relationships.
+        Optimized for showing parent-child relationships within the same tick.
+
+        This method provides a visual representation of the event log, showing
+        how events relate to each other across ticks and within the same tick.
+        It's especially useful for debugging complex event sequences and understanding
+        cause-effect relationships between events.
+
+        Args:
+            file: File-like object to print to (defaults to stdout).
+            show_data: Whether to show event data (defaults to True).
+        """
+        # Group events by tick
+        events_by_tick: Dict[int, List[Event]] = {}
+        for event in self.events:
+            if event.tick not in events_by_tick:
+                events_by_tick[event.tick] = []
+            events_by_tick[event.tick].append(event)
+
+        print("===== EVENT CASCADE VIEWER =====", file=file)
+
+        if not events_by_tick:
+            print("\n<No events in log>", file=file)
+            return
+
+        for tick in sorted(events_by_tick.keys()):
+            print(f"\n┌─── TICK {tick} ───┐", file=file)
+
+            # Get events for this tick
+            tick_events: List[Event] = events_by_tick[tick]
+
+            # Find root events for this tick
+            # These are either:
+            # 1. Events with no parent
+            # 2. Events whose parent is in a previous tick
+            root_events_for_tick: List[Event] = []
+            child_events: Set[str] = set()
+
+            for event in tick_events:
+                if event.parent_id:
+                    parent = self.get_event_by_id(event.parent_id)
+                    if parent and parent.tick == tick:
+                        # This is a child of an event in the same tick
+                        child_events.add(event.id)
+                        continue
+                # This is a root event for this tick
+                root_events_for_tick.append(event)
+
+            # Sort root events by type and sequence for consistent output
+            root_events_for_tick.sort(key=lambda e: (e.type, int(e.id.split("-")[2])))
+
+            # No events in this tick
+            if not root_events_for_tick:
+                print("  <No events>", file=file)
+                print("└" + "─" * (14 + len(str(tick))) + "┘", file=file)
+                continue
+
+            # Print each root event tree for this tick
+            for i, event in enumerate(root_events_for_tick):
+                # Print a separator between root events in the same tick
+                if i > 0:
+                    print("│", file=file)
+
+                # Print this root event and its children as a tree
+                self._print_event_in_cascade(
+                    event,
+                    tick_events,
+                    child_events,
+                    indent_level=1,
+                    file=file,
+                    show_data=show_data,
+                )
+
+            print("└" + "─" * (14 + len(str(tick))) + "┘", file=file)
+
+    def _print_event_in_cascade(
+        self,
+        event: Event,
+        tick_events: List[Event],
+        known_children: Set[str],
+        indent_level: int = 1,
+        file=sys.stdout,
+        show_data: bool = True,
+    ) -> None:
+        """Helper method to recursively print an event and its children within a cascade.
+
+        Args:
+            event: The event to print.
+            tick_events: All events for the current tick.
+            known_children: Set of event IDs that are children of other events in this tick.
+            indent_level: Current indentation level.
+            file: File-like object to print to.
+            show_data: Whether to show event data.
+        """
+        indent: str = "  " * indent_level
+
+        # Determine event symbol and cross-tick info
+        if event.parent_id:
+            parent = self.get_event_by_id(event.parent_id)
+            if parent and parent.tick < event.tick:
+                # This is triggered by an event from a previous tick
+                event_prefix = "↓"  # Downward arrow indicating triggered from previous tick
+                cross_tick_info = f" (caused by: {parent.type} @ tick {parent.tick})"
+            else:
+                # This is a child event in the current tick
+                event_prefix = "└─"
+                cross_tick_info = ""
+        else:
+            # This is a root event with no parent
+            event_prefix = "●"
+            cross_tick_info = ""
+
+        # Print current event header
+        print(f"{indent}{event_prefix} {event.type}{cross_tick_info}", file=file)
+
+        # Print ID in a more compact way
+        print(f"{indent}{'│ ' if event_prefix == '└─' else '  '}ID: {event.id}", file=file)
+
+        # Print data if requested
+        if show_data and event.data:
+            data_indent = f"{indent}{'│ ' if event_prefix == '└─' else '  '}"
+
+            if isinstance(event.data, dict) and len(event.data) > 0:
+                print(f"{data_indent}Data:", file=file)
+                for k, v in event.data.items():
+                    print(f"{data_indent}  {k}: {v}", file=file)
+            else:
+                print(f"{data_indent}Data: {event.data}", file=file)
+
+        # Find and print direct children within the same tick
+        children = [
+            e for e in tick_events if e.parent_id == event.id and e.id in known_children
+        ]
+
+        # Sort children by type and sequence
+        children.sort(key=lambda e: (e.type, int(e.id.split("-")[2])))
+
+        # If this event triggers future events, note it before printing children
+        future_children = [
+            e for e in self.events if e.parent_id == event.id and e.tick > event.tick
+        ]
+
+        if future_children:
+            future_by_tick: Dict[int, List[Event]] = {}
+            for child in future_children:
+                if child.tick not in future_by_tick:
+                    future_by_tick[child.tick] = []
+                future_by_tick[child.tick].append(child)
+
+            triggers_indent = f"{indent}{'│ ' if event_prefix == '└─' else '  '}"
+            tick_strs: List[str] = []
+
+            for child_tick in sorted(future_by_tick.keys()):
+                tick_children = future_by_tick[child_tick]
+                event_count = len(tick_children)
+                tick_strs.append(f"tick {child_tick} ({event_count})")
+
+            if tick_strs:
+                if len(tick_strs) == 1:
+                    print(f"{triggers_indent}↓ Triggers events in {tick_strs[0]}", file=file)
+                else:
+                    print(
+                        f"{triggers_indent}↓ Triggers events in: {', '.join(tick_strs)}",
+                        file=file,
+                    )
+
+        # If there are children in this tick, print them
+        if children:
+            for child in children:
+                self._print_event_in_cascade(
+                    child,
+                    tick_events,
+                    known_children,
+                    indent_level + 1,
+                    file=file,
+                    show_data=show_data,
+                )
 
     def save_to_file(self, filename: str) -> None:
         """Save event log to file.

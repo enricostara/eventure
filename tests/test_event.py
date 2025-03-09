@@ -454,16 +454,19 @@ def test_event_cascade_tracking() -> None:
 
     # First child event (B)
     log.advance_tick()
+    # Create event B with parent_event parameter
     event_b: Event = log.add_event("user.verified", {"user_id": 1}, parent_event=event_a)
 
     # Second child event (C)
     log.advance_tick()
+    # Create event C with parent_event parameter
     event_c: Event = log.add_event(
         "user.updated", {"user_id": 1, "name": "John"}, parent_event=event_b
     )
 
     # Third child event (D)
     log.advance_tick()
+    # Create event D with parent_event parameter
     event_d: Event = log.add_event("user.logged_in", {"user_id": 1}, parent_event=event_c)
 
     # Also add an unrelated event (X)
