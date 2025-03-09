@@ -260,8 +260,11 @@ class EventLog:
 
         add_children(event_id)
 
-        # Sort by tick and then by sequence (extracted from event ID)
-        return sorted(cascade, key=lambda e: (e.tick, int(e.id.split("-")[2])))
+        # Sort by tick, type hash, and then sequence
+        # This ensures correct ordering since sequence is calculated per tick+type combination
+        return sorted(
+            cascade, key=lambda e: (e.tick, e.id.split("-")[1], int(e.id.split("-")[2]))
+        )
 
     def save_to_file(self, filename: str) -> None:
         """Save event log to file.
