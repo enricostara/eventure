@@ -5,7 +5,6 @@ description = "A Python library providing a robust, type-safe event system for g
 authors = [
     { name = "Enrico Stara", email = "enrico.stara@gmail.com" }
 ]
-dependencies = []
 requires-python = ">=3.12"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -17,6 +16,8 @@ packages = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+dependencies = []
 
 [dependency-groups]
 dev = [
