@@ -357,3 +357,141 @@ def test_event_id_in_json() -> None:
 
     assert "event_id" in parsed_json
     assert parsed_json["event_id"] == event.id
+
+
+def test_event_with_parent() -> None:
+    """Test creating an event with a parent event reference."""
+    # Create parent event
+    parent_event: Event = Event(
+        tick=1,
+        timestamp=datetime.now(timezone.utc).timestamp(),
+        type="user.created",
+        data={"user_id": 1},
+    )
+
+    # Create child event referencing parent
+    child_event: Event = Event(
+        tick=2,
+        timestamp=datetime.now(timezone.utc).timestamp(),
+        type="user.updated",
+        data={"user_id": 1, "name": "Updated"},
+        parent_id=parent_event.id,
+    )
+
+    # Verify parent reference
+    assert child_event.parent_id == parent_event.id
+
+    # Test serialization and deserialization preserves parent_id
+    json_str: str = child_event.to_json()
+    deserialized_event: Event = Event.from_json(json_str)
+    assert deserialized_event.parent_id == parent_event.id
+
+
+def test_eventlog_add_event_with_parent() -> None:
+    """Test adding an event with a parent event reference to EventLog."""
+    log: EventLog = EventLog()
+
+    # Add parent event
+    parent_event: Event = log.add_event("user.created", {"user_id": 1})
+
+    # Advance tick
+    log.advance_tick()
+
+    # Add child event with parent reference
+    child_event: Event = log.add_event(
+        "user.updated", {"user_id": 1, "name": "Updated"}, parent_event=parent_event
+    )
+
+    # Verify parent reference
+    assert child_event.parent_id == parent_event.id
+
+    # Test retrieving event by ID
+    retrieved_parent: Event = log.get_event_by_id(parent_event.id)
+    assert retrieved_parent is not None
+    assert retrieved_parent.id == parent_event.id
+    assert retrieved_parent.type == "user.created"
+
+
+def test_eventbus_publish_with_parent() -> None:
+    """Test publishing an event with a parent event reference via EventBus."""
+    bus: EventBus = EventBus()
+    received_events: List[Event] = []
+
+    def handler(event: Event) -> None:
+        received_events.append(event)
+
+    # Subscribe to both event types
+    bus.subscribe("user.created", handler)
+    bus.subscribe("user.updated", handler)
+
+    # Publish parent event
+    parent_event: Event = bus.publish("user.created", {"user_id": 1})
+
+    # Publish child event with parent reference
+    child_event: Event = bus.publish(
+        "user.updated", {"user_id": 1, "name": "Updated"}, parent_event=parent_event
+    )
+
+    # Verify parent reference
+    assert child_event.parent_id == parent_event.id
+
+    # Verify both events were received by handler
+    assert len(received_events) == 2
+    assert received_events[0].id == parent_event.id
+    assert received_events[1].id == child_event.id
+    assert received_events[1].parent_id == parent_event.id
+
+
+def test_event_cascade_tracking() -> None:
+    """Test tracking cascades of related events."""
+    log: EventLog = EventLog()
+
+    # Create a chain of events: A -> B -> C -> D
+    # Where A is the root event, and each subsequent event is caused by the previous one
+
+    # Root event (A)
+    event_a: Event = log.add_event("user.created", {"user_id": 1})
+
+    # First child event (B)
+    log.advance_tick()
+    event_b: Event = log.add_event("user.verified", {"user_id": 1}, parent_event=event_a)
+
+    # Second child event (C)
+    log.advance_tick()
+    event_c: Event = log.add_event(
+        "user.updated", {"user_id": 1, "name": "John"}, parent_event=event_b
+    )
+
+    # Third child event (D)
+    log.advance_tick()
+    event_d: Event = log.add_event("user.logged_in", {"user_id": 1}, parent_event=event_c)
+
+    # Also add an unrelated event (X)
+    log.advance_tick()
+    event_x: Event = log.add_event("system.backup", {"status": "completed"})
+
+    # Get cascade starting from root event A
+    cascade_a: List[Event] = log.get_event_cascade(event_a.id)
+
+    # Should include A, B, C, D but not X
+    assert len(cascade_a) == 4
+    assert cascade_a[0].id == event_a.id  # Root event should be first
+    assert cascade_a[1].id == event_b.id
+    assert cascade_a[2].id == event_c.id
+    assert cascade_a[3].id == event_d.id
+
+    # Get cascade starting from event B
+    cascade_b: List[Event] = log.get_event_cascade(event_b.id)
+
+    # Should include B, C, D but not A or X
+    assert len(cascade_b) == 3
+    assert cascade_b[0].id == event_b.id
+    assert cascade_b[1].id == event_c.id
+    assert cascade_b[2].id == event_d.id
+
+    # Get cascade for the unrelated event X
+    cascade_x: List[Event] = log.get_event_cascade(event_x.id)
+
+    # Should only include X
+    assert len(cascade_x) == 1
+    assert cascade_x[0].id == event_x.id

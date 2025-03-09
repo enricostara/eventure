@@ -23,12 +23,15 @@ class Event:
     - Contains a type identifier for different kinds of events
     - Includes arbitrary data specific to the event type
     - Has a unique event_id in the format tick-typeHash-sequence
+    - May reference a parent event that caused this event (for cascade tracking)
 
     Args:
         tick: Game tick when the event occurred
         timestamp: UTC timestamp when the event occurred
         type: Event type from the EventType enum
         data: Dictionary containing event-specific data
+        id: Optional explicit event ID (generated if not provided)
+        parent_id: Optional ID of the parent event that caused this one
     """
 
     # Class variable to track event sequence numbers
@@ -39,6 +42,7 @@ class Event:
     type: str
     data: Dict[str, Any]
     id: str = None  # Will be set in __post_init__
+    parent_id: Optional[str] = None  # Reference to parent event that caused this one
 
     def __post_init__(self):
         # Generate event_id if not provided
@@ -109,6 +113,7 @@ class Event:
                 "type": self.type,
                 "data": self.data,
                 "event_id": self.id,
+                "parent_id": self.parent_id,
             }
         )
 
@@ -116,13 +121,13 @@ class Event:
     def from_json(cls, json_str: str) -> "Event":
         """Create event from JSON string for loading or receiving."""
         data = json.loads(json_str)
-        event_id = data.get("event_id")  # Get event_id if it exists
         return cls(
             tick=data["tick"],
             timestamp=data["timestamp"],
             type=data["type"],
             data=data["data"],
-            id=event_id,
+            id=data.get("event_id"),
+            parent_id=data.get("parent_id"),
         )
 
 
@@ -134,12 +139,14 @@ class EventLog:
     - Tracks current tick number
     - Provides methods to add events and advance time
     - Handles saving and loading of event history
+    - Supports tracking cascades of related events
 
     The event log can be saved to disk and loaded later to:
     - Restore a game in progress
     - Review game history
     - Debug game state issues
     - Analyze gameplay patterns
+    - Trace causality chains between events
     """
 
     def __init__(self):
@@ -164,12 +171,15 @@ class EventLog:
         """
         self._current_tick += 1
 
-    def add_event(self, type: str, data: Dict[str, Any]) -> Event:
+    def add_event(
+        self, type: str, data: Dict[str, Any], parent_event: Optional[Event] = None
+    ) -> Event:
         """Add a new event at the current tick.
 
         Args:
             type: Event type as a string
             data: Dictionary containing event-specific data
+            parent_event: Optional parent event that caused this event (for cascade tracking)
 
         Returns:
             The newly created and added Event
@@ -178,11 +188,13 @@ class EventLog:
             Events are immutable once created. To modify game state,
             create a new event rather than trying to modify existing ones.
         """
+        parent_id = parent_event.id if parent_event else None
         event = Event(
             tick=self.current_tick,
             timestamp=datetime.now(timezone.utc).timestamp(),
             type=type,
             data=data,
+            parent_id=parent_id,
         )
         self.events.append(event)
         return event
@@ -196,6 +208,60 @@ class EventLog:
         - Analyzing game history
         """
         return [e for e in self.events if e.tick == tick]
+
+    def get_event_by_id(self, event_id: str) -> Optional[Event]:
+        """Get an event by its unique ID.
+
+        Args:
+            event_id: The unique ID of the event to find
+
+        Returns:
+            The event with the given ID, or None if not found
+        """
+        for event in self.events:
+            if event.id == event_id:
+                return event
+        return None
+
+    def get_event_cascade(self, event_id: str) -> List[Event]:
+        """Get the cascade of events starting from the specified event ID.
+
+        This returns the event with the given ID and all events that have it
+        as an ancestor in their parent chain.
+
+        Args:
+            event_id: The ID of the root event in the cascade
+
+        Returns:
+            A list of events in the cascade, ordered by tick and sequence
+        """
+        # Find the root event
+        root_event = self.get_event_by_id(event_id)
+        if not root_event:
+            return []
+
+        # Start with the root event
+        cascade = [root_event]
+
+        # Build a map of parent_id to events for faster lookup
+        parent_map: Dict[str, List[Event]] = {}
+        for event in self.events:
+            if event.parent_id:
+                if event.parent_id not in parent_map:
+                    parent_map[event.parent_id] = []
+                parent_map[event.parent_id].append(event)
+
+        # Recursively find all child events
+        def add_children(parent_id: str) -> None:
+            if parent_id in parent_map:
+                for child in parent_map[parent_id]:
+                    cascade.append(child)
+                    add_children(child.id)
+
+        add_children(event_id)
+
+        # Sort by tick and then by sequence (extracted from event ID)
+        return sorted(cascade, key=lambda e: (e.tick, int(e.id.split("-")[2])))
 
     def save_to_file(self, filename: str) -> None:
         """Save event log to file.
@@ -237,6 +303,7 @@ class EventBus:
     - Subscribe to specific event types
     - Publish events to all interested subscribers
     - Automatic event creation with current tick and timestamp
+    - Support for event cascade tracking through parent-child relationships
     """
 
     def __init__(self, event_log: Optional[EventLog] = None):
@@ -285,6 +352,7 @@ class EventBus:
         data: Dict[str, Any],
         tick: Optional[int] = None,
         timestamp: Optional[float] = None,
+        parent_event: Optional[Event] = None,
     ) -> Event:
         """Publish an event to all subscribers.
 
@@ -293,6 +361,7 @@ class EventBus:
             data: Dictionary containing event-specific data
             tick: Optional tick number (defaults to current tick from event_log)
             timestamp: Optional timestamp (defaults to current time)
+            parent_event: Optional parent event that caused this event (for cascade tracking)
 
         Returns:
             The created event
@@ -311,8 +380,11 @@ class EventBus:
         if timestamp is None:
             timestamp = datetime.now(timezone.utc).timestamp()
 
-        # Create the event
-        event = Event(tick=tick, timestamp=timestamp, type=event_type, data=data)
+        # Create the event with optional parent reference
+        parent_id = parent_event.id if parent_event else None
+        event = Event(
+            tick=tick, timestamp=timestamp, type=event_type, data=data, parent_id=parent_id
+        )
 
         # Dispatch to subscribers
         self._dispatch(event)
@@ -329,6 +401,11 @@ class EventBus:
             This method supports two types of wildcard subscriptions:
             1. Global wildcard "*" which will receive all events regardless of type
             2. Prefix wildcard "prefix.*" which will receive all events with the given prefix
+
+            The event is dispatched to handlers in this order:
+            1. Exact type match subscribers
+            2. Prefix wildcard subscribers
+            3. Global wildcard subscribers
         """
         # Notify specific event type subscribers
         if event.type in self.subscribers:
