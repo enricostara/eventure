@@ -5,10 +5,9 @@ This module provides the EventLog class for managing and storing events in the g
 """
 
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-if TYPE_CHECKING:
-    from eventure.event import Event
+from eventure.event import Event
 
 
 class EventLog:
@@ -52,8 +51,8 @@ class EventLog:
         self._current_tick += 1
 
     def add_event(
-        self, type: str, data: Dict[str, Any], parent_event: Optional["Event"] = None
-    ) -> "Event":
+        self, type: str, data: Dict[str, Any], parent_event: Optional[Event] = None
+    ) -> Event:
         """Add a new event at the current tick.
 
         Args:
@@ -68,8 +67,6 @@ class EventLog:
             Events are immutable once created. To modify game state,
             create a new event rather than trying to modify existing ones.
         """
-        # Import here to avoid circular imports
-        from eventure.event import Event
 
         parent_id = parent_event.id if parent_event else None
         event = Event(
@@ -82,7 +79,7 @@ class EventLog:
         self.events.append(event)
         return event
 
-    def get_events_at_tick(self, tick: int) -> List["Event"]:
+    def get_events_at_tick(self, tick: int) -> List[Event]:
         """Get all events that occurred at a specific tick.
 
         This is useful for:
@@ -92,7 +89,7 @@ class EventLog:
         """
         return [e for e in self.events if e.tick == tick]
 
-    def get_event_by_id(self, event_id: str) -> Optional["Event"]:
+    def get_event_by_id(self, event_id: str) -> Optional[Event]:
         """Get an event by its unique ID.
 
         Args:
@@ -106,7 +103,7 @@ class EventLog:
                 return event
         return None
 
-    def get_event_cascade(self, event_id: str) -> List["Event"]:
+    def get_event_cascade(self, event_id: str) -> List[Event]:
         """Get the cascade of events starting from the specified event ID.
 
         This returns the event with the given ID and all events that have it
@@ -183,9 +180,6 @@ class EventLog:
         with open(filename, "r") as f:
             for line in f:
                 if line.strip():
-                    # Import here to avoid circular imports
-                    from eventure.event import Event
-
                     event = Event.from_json(line)
                     log.events.append(event)
                     # Update current tick to highest tick found

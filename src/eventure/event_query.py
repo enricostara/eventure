@@ -8,7 +8,8 @@ including event cascade relationships and parent-child event tracking.
 import sys
 from typing import Dict, List, Set, Tuple
 
-from eventure.event import Event, EventLog
+from eventure.event import Event
+from eventure.event_log import EventLog
 
 
 class EventQuery:
