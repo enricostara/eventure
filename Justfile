@@ -28,3 +28,8 @@ validate: format lint
 
 lc:
 	uv run wc -l **/*.py
+
+release: validate
+	rm -rf dist
+	uv build
+	uv publish
