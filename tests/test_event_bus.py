@@ -26,15 +26,22 @@ def test_eventbus_basic_subscription() -> None:
     assert received_events[0].data["user_id"] == 1
     assert received_events[0].tick == 0  # Current tick from EventLog
 
+    # Verify the event was added to the log
+    assert len(log.events) == 1
+    assert log.events[0].type == "user.created"
+    assert log.events[0].data["user_id"] == 1
+
     # Test unsubscribing
     unsubscribe()
     bus.publish("user.created", {"user_id": 2})
     assert len(received_events) == 1  # Should not receive the second event
+    assert len(log.events) == 2  # But the event should still be in the log
 
 
 def test_eventbus_without_eventlog() -> None:
-    """Test EventBus without an EventLog."""
-    bus: EventBus = EventBus()  # No EventLog provided
+    """Test EventBus with an EventLog."""
+    log: EventLog = EventLog()  # Create an EventLog
+    bus: EventBus = EventBus(log)  # Provide the EventLog
     received_events: List[Event] = []
 
     def handler(event: Event) -> None:
@@ -42,22 +49,19 @@ def test_eventbus_without_eventlog() -> None:
 
     bus.subscribe("user.created", handler)
 
-    # Publish with explicit tick
-    event: Event = bus.publish("user.created", {"user_id": 1}, tick=5)
+    # Publish an event
+    event: Event = bus.publish("user.created", {"user_id": 1})
 
-    assert event.tick == 5
+    # Verify the event was created with the current tick (0)
+    assert event.tick == 0
     assert len(received_events) == 1
-    assert received_events[0].tick == 5
-
-    # Publish without tick (should default to 0)
-    event2: Event = bus.publish("user.created", {"user_id": 2})
-    assert event2.tick == 0
-    assert received_events[1].tick == 0
+    assert len(log.events) == 1  # Event should be in the log
 
 
 def test_eventbus_multiple_subscribers() -> None:
     """Test multiple subscribers for the same event type."""
-    bus: EventBus = EventBus()
+    log: EventLog = EventLog()
+    bus: EventBus = EventBus(log)
     received1: List[Event] = []
     received2: List[Event] = []
 
@@ -76,11 +80,13 @@ def test_eventbus_multiple_subscribers() -> None:
     assert len(received2) == 1
     assert received1[0] == event
     assert received2[0] == event
+    assert len(log.events) == 1
 
 
 def test_eventbus_wildcard_subscription() -> None:
     """Test wildcard event subscription."""
-    bus: EventBus = EventBus()
+    log: EventLog = EventLog()
+    bus: EventBus = EventBus(log)
     received_events: List[Event] = []
 
     def handler(event: Event) -> None:
@@ -96,50 +102,37 @@ def test_eventbus_wildcard_subscription() -> None:
     assert len(received_events) == 2
     assert received_events[0] == event1
     assert received_events[1] == event2
+    assert len(log.events) == 2
 
 
 def test_eventbus_global_subscription() -> None:
     """Test subscribing to all events with wildcard."""
-    bus: EventBus = EventBus()
+    log: EventLog = EventLog()
+    bus: EventBus = EventBus(log)
     received_events: List[Event] = []
 
     def handler(event: Event) -> None:
         received_events.append(event)
 
-    # Subscribe to all events with wildcard
+    # Subscribe to ALL events with global wildcard
     bus.subscribe("*", handler)
 
-    # Publish different event types
+    # All of these should be received
     event1: Event = bus.publish("user.created", {"user_id": 1})
-    event2: Event = bus.publish("order.completed", {"order_id": 2})
+    event2: Event = bus.publish("item.added", {"item_id": 100})
+    event3: Event = bus.publish("game.started", {"level": 1})
 
-    # Verify all events were received
-    assert len(received_events) == 2
+    assert len(received_events) == 3
     assert received_events[0] == event1
     assert received_events[1] == event2
-
-
-def test_eventbus_set_event_log() -> None:
-    """Test setting EventLog after EventBus creation."""
-    bus: EventBus = EventBus()  # No EventLog initially
-    log: EventLog = EventLog()
-
-    # Advance tick in the log
-    log.advance_tick()
-    log.advance_tick()  # Now at tick 2
-
-    # Set the EventLog
-    bus.set_event_log(log)
-
-    # Publish an event (should use current tick from EventLog)
-    event: Event = bus.publish("test.event", {})
-
-    assert event.tick == 2  # Should use current tick from EventLog
+    assert received_events[2] == event3
+    assert len(log.events) == 3
 
 
 def test_eventbus_publish_with_parent() -> None:
     """Test publishing an event with a parent event reference via EventBus."""
-    bus: EventBus = EventBus()
+    log: EventLog = EventLog()
+    bus: EventBus = EventBus(log)
     received_events: List[Event] = []
 
     def handler(event: Event) -> None:
@@ -159,6 +152,7 @@ def test_eventbus_publish_with_parent() -> None:
 
     # Verify parent reference
     assert child_event.parent_id == parent_event.id
+    assert len(log.events) == 2  # Both events should be in the log
 
     # Verify both events were received by handler
     assert len(received_events) == 2

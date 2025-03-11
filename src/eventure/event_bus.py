@@ -4,7 +4,6 @@ Event bus module for Eventure.
 This module provides the EventBus class for publishing events and subscribing to them.
 """
 
-from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 from eventure.event import Event
@@ -24,21 +23,13 @@ class EventBus:
     - Support for event cascade tracking through parent-child relationships
     """
 
-    def __init__(self, event_log: Optional[EventLog] = None):
+    def __init__(self, event_log: EventLog):
         """Initialize the event bus.
 
         Args:
-            event_log: Optional reference to an EventLog for tick information
+            event_log: Reference to an EventLog for event creation and tick information
         """
         self.subscribers: Dict[str, List[Callable[[Event], None]]] = {}
-        self.event_log = event_log
-
-    def set_event_log(self, event_log: EventLog) -> None:
-        """Set the reference to the event log for tick information.
-
-        Args:
-            event_log: The event log to use for tick information
-        """
         self.event_log = event_log
 
     def subscribe(
@@ -68,8 +59,6 @@ class EventBus:
         self,
         event_type: str,
         data: Dict[str, Any],
-        tick: Optional[int] = None,
-        timestamp: Optional[float] = None,
         parent_event: Optional[Event] = None,
     ) -> Event:
         """Publish an event to all subscribers.
@@ -77,32 +66,21 @@ class EventBus:
         Args:
             event_type: The type of event to publish as a string
             data: Dictionary containing event-specific data
-            tick: Optional tick number (defaults to current tick from event_log)
-            timestamp: Optional timestamp (defaults to current time)
             parent_event: Optional parent event that caused this event (for cascade tracking)
 
         Returns:
             The created event
 
         Note:
-            This method does NOT add the event to the event log.
-            It only creates the event and dispatches it to subscribers.
+            This method adds the event to the event log.
+            It also dispatches the event to all subscribers.
         """
-        # Get current tick from event_log if available
-        if tick is None and self.event_log:
-            tick = self.event_log.current_tick
-        elif tick is None:
-            tick = 0
+        # Use the event_log to create and add the event
+        if self.event_log is None:
+            raise ValueError("EventBus requires an EventLog to publish events")
 
-        # Use current time if timestamp not provided
-        if timestamp is None:
-            timestamp = datetime.now(timezone.utc).timestamp()
-
-        # Create the event with optional parent reference
-        parent_id = parent_event.id if parent_event else None
-        event = Event(
-            tick=tick, timestamp=timestamp, type=event_type, data=data, parent_id=parent_id
-        )
+        # Create and add the event using event_log
+        event = self.event_log.add_event(event_type, data, parent_event)
 
         # Dispatch to subscribers
         self._dispatch(event)
