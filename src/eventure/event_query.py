@@ -127,8 +127,8 @@ class EventQuery:
             if event.id not in child_events:
                 root_events.append(event)
 
-        # Sort root events by type and sequence for consistent output
-        root_events.sort(key=lambda e: (e.type, int(e.id.split("-")[2])))
+        # Sort root events by timestamp for chronological order
+        root_events.sort(key=lambda e: e.timestamp)
 
         return root_events, child_events
 
@@ -296,8 +296,8 @@ class EventQuery:
             e for e in tick_events if e.parent_id == event.id and e.id in known_children
         ]
 
-        # Sort children by type and sequence
-        children.sort(key=lambda e: (e.type, int(e.id.split("-")[2])))
+        # Sort children by timestamp for chronological order
+        children.sort(key=lambda e: e.timestamp)
         return children
 
     def _print_future_triggers(

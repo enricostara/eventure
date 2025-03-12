@@ -100,10 +100,10 @@ def test_get_sorted_children() -> None:
         parent_event, tick_events, child_events
     )
 
-    # Verify sorting (should be sorted by type)
+    # Verify sorting (should be sorted by timestamp)
     assert len(sorted_children) == 2
-    assert sorted_children[0] == child_event2  # child_a comes before child_b
-    assert sorted_children[1] == child_event1
+    assert sorted_children[0] == child_event1  # First created event comes first
+    assert sorted_children[1] == child_event2  # Second created event comes second
 
 
 def test_get_event_display_info() -> None:

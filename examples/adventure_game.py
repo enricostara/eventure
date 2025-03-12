@@ -142,40 +142,14 @@ class AdventureGame:
             },
         )
 
-        # Process any pending events in the event log
-        self._process_all_events()
-
         # End game - this should be the final event
         self.event_log.advance_tick()
         self.event_bus.publish(
             "game.end", {"message": "You've completed your adventure!", "outcome": "victory"}
         )
 
-    def _process_all_events(self) -> None:
-        """Process all events in the event log up to the current tick.
-
-        This ensures that any events that were created by event handlers
-        are properly processed before continuing with the simulation.
-        """
-        # Get the current tick to process events up to this point
-        max_tick: int = self.event_log.current_tick
-
-        # Process all events up to the current tick
-        # The event bus will automatically dispatch events to the appropriate handlers
-        # based on subscriptions, so we don't need to manually call handlers
-        for tick in range(max_tick + 1):
-            # Process all events in this tick
-            self.event_log.get_events_at_tick(tick)
-
-            # Check if we need to stop processing due to game over
-            if self.game_over:
-                break
-
     def _handle_player_move(self, event: Event) -> None:
         """Handle player movement events."""
-        # Ignore events if game is over
-        if self.game_over:
-            return
 
         destination: str = event.data["destination"]
         self.player_location = destination
@@ -190,10 +164,6 @@ class AdventureGame:
 
     def _handle_room_enter(self, event: Event) -> None:
         """Handle room entry events, potentially triggering discoveries."""
-        # Ignore events if game is over
-        if self.game_over:
-            return
-
         room: str = event.data["room"]
         room_data: Dict[str, Any] = self.game_map[room]
 
@@ -245,10 +215,6 @@ class AdventureGame:
 
     def _handle_pickup_item(self, event: Event) -> None:
         """Handle item pickup events."""
-        # Ignore events if game is over
-        if self.game_over:
-            return
-
         item: str = event.data["item"]
         self.player_inventory.append(item)
 
@@ -274,10 +240,6 @@ class AdventureGame:
 
     def _handle_enemy_encounter(self, event: Event) -> None:
         """Handle enemy encounter events."""
-        # Ignore events if game is over
-        if self.game_over:
-            return
-
         enemy: str = event.data["enemy"]
 
         # Start combat with the enemy
@@ -317,10 +279,6 @@ class AdventureGame:
 
     def _handle_combat_round(self, event: Event) -> None:
         """Handle combat round events."""
-        # Ignore events if game is over
-        if self.game_over:
-            return
-
         enemy: str = event.data["enemy"]
         round_num: int = event.data["round"]
 
@@ -371,10 +329,6 @@ class AdventureGame:
 
     def _handle_treasure_found(self, event: Event) -> None:
         """Handle treasure discovery events."""
-        # Ignore events if game is over
-        if self.game_over:
-            return
-
         treasure: str = event.data["treasure"]
         self.treasure_found += 1
 
@@ -391,10 +345,6 @@ class AdventureGame:
 
     def _handle_health_change(self, event: Event) -> None:
         """Handle player health change events."""
-        # Ignore events if game is over
-        if self.game_over:
-            return
-
         amount: int = event.data["amount"]
         self.player_health += amount
 
