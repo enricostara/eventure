@@ -6,10 +6,13 @@
 @default: 
 	just --list --unsorted
 
-sync:
+install:
     uv sync --all-extras --cache-dir .uv_cache
 
-prod-sync:
+upgrade:
+	uv sync --all-extras --cache-dir .uv_cache --upgrade
+
+install-prod:
 	uv sync --all-extras --no-dev --cache-dir .uv_cache
 
 pre-commit:
@@ -29,7 +32,9 @@ validate: format lint
 lc:
 	uv run wc -l **/*.py
 
-release: validate
+build:
 	rm -rf dist
 	uv build
+
+release: validate build
 	uv publish

@@ -83,11 +83,11 @@ class EventBus:
         event = self.event_log.add_event(event_type, data, parent_event)
 
         # Dispatch to subscribers
-        self._dispatch(event)
+        self.dispatch(event)
 
         return event
 
-    def _dispatch(self, event: Event) -> None:
+    def dispatch(self, event: Event) -> None:
         """Dispatch the event to all interested subscribers.
 
         Args:
