@@ -29,12 +29,15 @@ test:
 
 validate: format lint
 
+doc:
+	pydoc-markdown --render-toc -I src > src/README.md
+
 lc:
 	uv run wc -l **/*.py
 
-build:
+build: validate doc
 	rm -rf dist
 	uv build
 
-release: validate build
+release: build
 	uv publish

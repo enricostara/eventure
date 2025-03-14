@@ -24,6 +24,7 @@ dev = [
     "pytest>=7.4.0",
     "ruff>=0.9.6",
     "rust-just>=1.39.0",
+    "pydoc-markdown>=3.0.0"
 ]
 
 [tool.ruff]
