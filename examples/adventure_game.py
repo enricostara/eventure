@@ -113,27 +113,23 @@ class AdventureGame:
         random.seed(42)
 
         # Move to hallway
-        self.event_log.advance_tick()
         self.event_bus.publish(
             "player.move",
             {"destination": "hallway", "message": "You cautiously move into the hallway."},
         )
 
         # Pick up key
-        self.event_log.advance_tick()
         self.event_bus.publish(
             "player.pickup_item", {"item": "key", "message": "You found a rusty key!"}
         )
 
         # Move to chamber
-        self.event_log.advance_tick()
         self.event_bus.publish(
             "player.move",
             {"destination": "chamber", "message": "You enter the ancient chamber."},
         )
 
         # Move to treasury (triggers future events due to key)
-        self.event_log.advance_tick()
         self.event_bus.publish(
             "player.move",
             {
@@ -143,14 +139,13 @@ class AdventureGame:
         )
 
         # End game - this should be the final event
-        self.event_log.advance_tick()
         self.event_bus.publish(
             "game.end", {"message": "You've completed your adventure!", "outcome": "victory"}
         )
 
     def _handle_player_move(self, event: Event) -> None:
         """Handle player movement events."""
-
+        self.event_log.advance_tick()
         destination: str = event.data["destination"]
         self.player_location = destination
 
@@ -240,6 +235,7 @@ class AdventureGame:
 
     def _handle_enemy_encounter(self, event: Event) -> None:
         """Handle enemy encounter events."""
+        self.event_log.advance_tick()
         enemy: str = event.data["enemy"]
 
         # Start combat with the enemy
@@ -262,7 +258,6 @@ class AdventureGame:
 
         # Add two more combat rounds if game is not over yet
         if not self.game_over:
-            # Add round 2
             self.event_bus.publish(
                 "combat.round",
                 {"enemy": enemy, "round": 2, "message": f"Round 2 against {enemy}!"},
@@ -313,6 +308,7 @@ class AdventureGame:
             {"amount": -damage_taken, "reason": f"Damage from {enemy}"},
             parent_event=event,
         )
+        self.event_log.advance_tick()
 
         # Stop processing if the game is over after health change
         if self.game_over:
@@ -453,7 +449,7 @@ class AdventureGame:
             print(f"Events Triggered by First Move: {len(child_events)}")
 
         # Create a focused event query for the treasury room events
-        print("\nEvents related to the treasury room:")
+        print("\nAll events related to the treasury room:")
         treasury_events: List[Event] = [
             e
             for e in self.event_log.events

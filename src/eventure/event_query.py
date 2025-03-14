@@ -149,11 +149,7 @@ class EventQuery:
             file: File-like object to print to
             show_data: Whether to show event data
         """
-        for i, event in enumerate(root_events):
-            # Print a separator between root events in the same tick
-            if i > 0:
-                print("│", file=file)
-
+        for event in root_events:
             # Print this root event and its children as a tree
             self._print_event_in_cascade(
                 event,
@@ -251,6 +247,7 @@ class EventQuery:
             file: File-like object to print to
         """
         # Print current event header
+        print(f"{indent}│" if event_prefix == "└─" else "│", file=file)
         print(f"{indent}{event_prefix} {event.type}{cross_tick_info}", file=file)
 
         # Print ID in a more compact way
