@@ -515,31 +515,27 @@ class CryptoTradingBot:
         # Create event query
         query = EventQuery(self.event_log)
 
-        # Query for all strategy signals
-        strategy_events = [e for e in self.event_log.events if e.type == "strategy.signal"]
+        # Query for all strategy signals using the new API
+        strategy_events = query.get_events_by_type("strategy.signal")
         print(f"Strategy Signals: {len(strategy_events)}")
 
-        # Get the first buy signal
-        buy_signals = [e for e in strategy_events if e.data["signal"] == "BUY"]
+        # Get the first buy signal using the new API
+        buy_signals = query.get_events_by_data("signal", "BUY")
         if buy_signals:
             first_buy = buy_signals[0]
             print("\nFirst BUY signal and its cascade:")
+            
+            # Print the cascade using the new API
+            query.print_single_cascade(first_buy)
 
-            # Find root events for the tick containing the first buy signal
-            events_in_tick = [e for e in self.event_log.events if e.tick == first_buy.tick]
-            root_events, child_events = query._identify_root_and_child_events(events_in_tick)
-
-            # Print the cascade for the tick containing the first buy signal
-            query._print_root_events([first_buy], events_in_tick, set(child_events))
-
-            # Find orders triggered by this signal
+            # Find orders triggered by this signal using the new API
             print("\nOrders triggered by first BUY signal:")
-            child_events = [e for e in self.event_log.events if e.parent_id == first_buy.id]
+            child_events = query.get_child_events(first_buy)
             for child in child_events:
                 print(f"  {child.type}: {child.data}")
 
-        # Query for all filled orders
-        filled_orders = [e for e in self.event_log.events if e.type == "order.filled"]
+        # Query for all filled orders using the new API
+        filled_orders = query.get_events_by_type("order.filled")
         print(f"\nFilled Orders: {len(filled_orders)}")
 
         # Calculate average buy price for BTC
@@ -552,7 +548,7 @@ class CryptoTradingBot:
         if btc_buys:
             total_btc = sum(e.data["quantity"] for e in btc_buys)
             total_usd = sum(e.data["quantity"] * e.data["price"] for e in btc_buys)
-            avg_price = total_usd / total_btc if total_btc > 0 else 0
+            avg_price = total_usd / total_btc
             print(f"\nAverage BTC buy price: ${avg_price:.2f}")
 
 

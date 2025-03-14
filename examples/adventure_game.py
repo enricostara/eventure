@@ -426,42 +426,40 @@ class AdventureGame:
         print("EVENT QUERY DEMONSTRATIONS")
         print("=" * 50)
 
-        # Get all combat-related events
+        # Create an event query
+        query: EventQuery = EventQuery(self.event_log)
+
+        # Get all combat-related events using the new API
         combat_events: List[Event] = [
-            e for e in self.event_log.events if e.type.startswith("combat.")
+            e for e in query.get_events_by_type("combat.start") + 
+                 query.get_events_by_type("combat.attack") +
+                 query.get_events_by_type("combat.end")
         ]
         print(f"Total Combat Events: {len(combat_events)}")
 
-        # Get all treasure events
-        treasure_events: List[Event] = [
-            e for e in self.event_log.events if e.type == "treasure.found"
-        ]
+        # Get all treasure events using the new API
+        treasure_events: List[Event] = query.get_events_by_type("treasure.found")
         print(f"Treasure Discovery Events: {len(treasure_events)}")
 
-        # Get all events triggered by the first move event
-        first_move: Optional[Event] = next(
-            (e for e in self.event_log.events if e.type == "player.move"), None
-        )
-        if first_move:
-            child_events: List[Event] = [
-                e for e in self.event_log.events if e.parent_id == first_move.id
-            ]
+        # Get all events triggered by the first move event using the new API
+        move_events: List[Event] = query.get_events_by_type("player.move")
+        if move_events:
+            first_move: Event = move_events[0]
+            child_events: List[Event] = query.get_child_events(first_move)
             print(f"Events Triggered by First Move: {len(child_events)}")
 
         # Create a focused event query for the treasury room events
         print("\nAll events related to the treasury room:")
-        treasury_events: List[Event] = [
-            e
-            for e in self.event_log.events
-            if (e.type == "room.enter" and e.data.get("room") == "treasury")
-            or (
-                e.parent_id
-                and self.event_log.get_event_by_id(e.parent_id)
-                and self.event_log.get_event_by_id(e.parent_id).type == "room.enter"
-                and self.event_log.get_event_by_id(e.parent_id).data.get("room") == "treasury"
-            )
-        ]
-
+        
+        # First get all room.enter events for the treasury
+        treasury_enter_events: List[Event] = query.get_events_by_data("room", "treasury")
+        
+        # Then collect all child events of treasury room entry
+        treasury_events: List[Event] = []
+        for event in treasury_enter_events:
+            treasury_events.append(event)
+            treasury_events.extend(query.get_child_events(event))
+            
         # Create a mini event log with just these events
         if treasury_events:
             focused_log: EventLog = EventLog()
