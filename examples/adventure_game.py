@@ -431,9 +431,10 @@ class AdventureGame:
 
         # Get all combat-related events using the new API
         combat_events: List[Event] = [
-            e for e in query.get_events_by_type("combat.start") + 
-                 query.get_events_by_type("combat.attack") +
-                 query.get_events_by_type("combat.end")
+            e
+            for e in query.get_events_by_type("combat.start")
+            + query.get_events_by_type("combat.attack")
+            + query.get_events_by_type("combat.end")
         ]
         print(f"Total Combat Events: {len(combat_events)}")
 
@@ -450,16 +451,16 @@ class AdventureGame:
 
         # Create a focused event query for the treasury room events
         print("\nAll events related to the treasury room:")
-        
+
         # First get all room.enter events for the treasury
         treasury_enter_events: List[Event] = query.get_events_by_data("room", "treasury")
-        
+
         # Then collect all child events of treasury room entry
         treasury_events: List[Event] = []
         for event in treasury_enter_events:
             treasury_events.append(event)
             treasury_events.extend(query.get_child_events(event))
-            
+
         # Create a mini event log with just these events
         if treasury_events:
             focused_log: EventLog = EventLog()

@@ -524,7 +524,7 @@ class CryptoTradingBot:
         if buy_signals:
             first_buy = buy_signals[0]
             print("\nFirst BUY signal and its cascade:")
-            
+
             # Print the cascade using the new API
             query.print_single_cascade(first_buy)
 

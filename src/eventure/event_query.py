@@ -27,9 +27,7 @@ class EventQuery:
         """
         self.event_log = event_log
 
-    def print_event_cascade(
-        self, file: TextIO = sys.stdout, show_data: bool = True
-    ) -> None:
+    def print_event_cascade(self, file: TextIO = sys.stdout, show_data: bool = True) -> None:
         """Print events organized by tick with clear cascade relationships.
         Optimized for showing parent-child relationships within the same tick.
 
@@ -348,10 +346,10 @@ class EventQuery:
 
     def get_events_by_type(self, event_type: str) -> List[Event]:
         """Get all events matching a specific type.
-        
+
         Args:
             event_type: Event type to filter by
-            
+
         Returns:
             List of matching events
         """
@@ -359,11 +357,11 @@ class EventQuery:
 
     def get_events_by_data(self, key: str, value: Any) -> List[Event]:
         """Get all events with matching data key-value pair.
-        
+
         Args:
             key: Key in event data to match
             value: Value to match against
-            
+
         Returns:
             List of matching events
         """
@@ -371,10 +369,10 @@ class EventQuery:
 
     def get_child_events(self, parent_event: Event) -> List[Event]:
         """Get all events that are direct children of the given event.
-        
+
         Args:
             parent_event: Parent event to find children for
-            
+
         Returns:
             List of child events
         """
@@ -383,37 +381,39 @@ class EventQuery:
     def get_cascade_events(self, root_event: Event) -> List[Event]:
         """Get all events in the cascade starting from the given root event.
         This includes the root event, its children, their children, etc.
-        
+
         Args:
             root_event: Root event to find cascade for
-            
+
         Returns:
             List of events in the cascade (including the root)
         """
         # Start with the root event
         cascade = [root_event]
         processed_ids = {root_event.id}
-        
+
         # Process each event in the cascade
         i = 0
         while i < len(cascade):
             # Get children of the current event
             current = cascade[i]
             children = self.get_child_events(current)
-            
+
             # Add unprocessed children to the cascade
             for child in children:
                 if child.id not in processed_ids:
                     cascade.append(child)
                     processed_ids.add(child.id)
-            
+
             i += 1
-            
+
         return cascade
 
-    def print_event_details(self, event: Event, file: TextIO = sys.stdout, show_data: bool = True) -> None:
+    def print_event_details(
+        self, event: Event, file: TextIO = sys.stdout, show_data: bool = True
+    ) -> None:
         """Print details of a single event.
-        
+
         Args:
             event: Event to print details for
             file: File-like object to print to
@@ -421,20 +421,22 @@ class EventQuery:
         """
         # Get display info
         event_prefix, cross_tick_info = self._get_event_display_info(event)
-        
+
         # Print event header
         print(f"● {event.type}{cross_tick_info}", file=file)
         print(f"  ID: {event.id}", file=file)
-        
+
         # Print data if requested
         if show_data and event.data:
             print("  Data:", file=file)
             for key, value in event.data.items():
                 print(f"    {key}: {value}", file=file)
 
-    def print_single_cascade(self, root_event: Event, file: TextIO = sys.stdout, show_data: bool = True) -> None:
+    def print_single_cascade(
+        self, root_event: Event, file: TextIO = sys.stdout, show_data: bool = True
+    ) -> None:
         """Print a single event cascade starting from the root event.
-        
+
         Args:
             root_event: Root event to start cascade from
             file: File-like object to print to
@@ -442,16 +444,16 @@ class EventQuery:
         """
         # Get all events for the tick containing the root event
         tick_events = [e for e in self.event_log.events if e.tick == root_event.tick]
-        
+
         # Identify child events
         _, child_events = self._identify_root_and_child_events(tick_events)
-        
+
         # Print the cascade
         self._print_root_events([root_event], tick_events, set(child_events), file, show_data)
 
     def count_events_by_type(self) -> Dict[str, int]:
         """Count events by type.
-        
+
         Returns:
             Dictionary mapping event types to counts
         """
@@ -462,10 +464,10 @@ class EventQuery:
 
     def get_events_at_tick(self, tick: int) -> List[Event]:
         """Get all events that occurred at a specific tick.
-        
+
         Args:
             tick: Tick number to filter by
-            
+
         Returns:
             List of events at the specified tick
         """
@@ -473,29 +475,31 @@ class EventQuery:
 
     def get_root_events(self, tick: Optional[int] = None) -> List[Event]:
         """Get all root events, optionally filtered by tick.
-        
+
         Root events are those with no parent or whose parent is in a previous tick.
-        
+
         Args:
             tick: Optional tick to filter by
-            
+
         Returns:
             List of root events
         """
         # Get events for the specified tick, or all events if tick is None
-        events_to_check = self.get_events_at_tick(tick) if tick is not None else self.event_log.events
-        
+        events_to_check = (
+            self.get_events_at_tick(tick) if tick is not None else self.event_log.events
+        )
+
         # Group events by tick for efficient processing
         events_by_tick = {}
         for event in events_to_check:
             if event.tick not in events_by_tick:
                 events_by_tick[event.tick] = []
             events_by_tick[event.tick].append(event)
-        
+
         # Find root events for each tick
         root_events = []
-        for tick_num, tick_events in events_by_tick.items():
+        for _tick_num, tick_events in events_by_tick.items():
             tick_roots, _ = self._identify_root_and_child_events(tick_events)
             root_events.extend(tick_roots)
-            
+
         return root_events
