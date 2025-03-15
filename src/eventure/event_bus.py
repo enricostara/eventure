@@ -47,18 +47,18 @@ class EventBus:
 
         Returns:
             A function that can be called to unsubscribe the handler
-            
+
         Examples:
             ```python
             # Subscribe to a specific event type
             bus.subscribe("player.move", on_player_move)
-            
+
             # Subscribe to all player events
             bus.subscribe("player.*", on_any_player_event)
-            
+
             # Subscribe to all error events
             bus.subscribe("*.error", on_any_error_event)
-            
+
             # Subscribe to all events
             bus.subscribe("*", on_any_event)
             ```
@@ -124,24 +124,49 @@ class EventBus:
             3. Suffix wildcard subscribers
             4. Global wildcard subscribers
         """
-        # Notify specific event type subscribers
+        self._dispatch_exact_match(event)
+        self._dispatch_prefix_wildcard(event)
+        self._dispatch_suffix_wildcard(event)
+        self._dispatch_global_wildcard(event)
+
+    def _dispatch_exact_match(self, event: Event) -> None:
+        """Dispatch the event to exact match subscribers.
+
+        Args:
+            event: The event to dispatch
+        """
         if event.type in self.subscribers:
             for handler in self.subscribers[event.type]:
                 handler(event)
 
-        # Notify prefix wildcard subscribers (e.g., "user.*")
+    def _dispatch_prefix_wildcard(self, event: Event) -> None:
+        """Dispatch the event to prefix wildcard subscribers.
+
+        Args:
+            event: The event to dispatch
+        """
         for pattern, handlers in self.subscribers.items():
             if pattern.endswith(".*") and event.type.startswith(pattern[:-1]):
                 for handler in handlers:
                     handler(event)
-                    
-        # Notify suffix wildcard subscribers (e.g., "*.error")
+
+    def _dispatch_suffix_wildcard(self, event: Event) -> None:
+        """Dispatch the event to suffix wildcard subscribers.
+
+        Args:
+            event: The event to dispatch
+        """
         for pattern, handlers in self.subscribers.items():
             if pattern.startswith("*.") and event.type.endswith(pattern[1:]):
                 for handler in handlers:
                     handler(event)
 
-        # Notify global wildcard subscribers
+    def _dispatch_global_wildcard(self, event: Event) -> None:
+        """Dispatch the event to global wildcard subscribers.
+
+        Args:
+            event: The event to dispatch
+        """
         if "*" in self.subscribers:
             for handler in self.subscribers["*"]:
                 handler(event)

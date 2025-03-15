@@ -176,9 +176,9 @@ def test_eventbus_suffix_wildcard_subscription() -> None:
     # These should be received (*.error)
     event1: Event = bus.publish("user.error", {"message": "User not found"})
     event2: Event = bus.publish("network.error", {"message": "Connection failed"})
-    
+
     # This should not be received (not an error event)
-    event3: Event = bus.publish("user.login", {"user_id": 123})
+    bus.publish("user.login", {"user_id": 123})
 
     assert len(received_events) == 2
     assert received_events[0] == event1

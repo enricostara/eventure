@@ -1,6 +1,6 @@
 [project]
 name = "eventure"
-version = "0.4.0"
+version = "0.4.1"
 description = "A Python library providing a robust, type-safe event system for game development and simulation."
 authors = [
     { name = "Enrico Stara", email = "enrico.stara@gmail.com" }
