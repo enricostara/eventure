@@ -39,9 +39,10 @@ class EventBus:
 
         Args:
             event_type: The type of event to subscribe to as a string.
-                Supports two types of wildcards:
+                Supports three types of wildcards:
                 - Global wildcard "*" to receive all events regardless of type
                 - Prefix wildcard "prefix.*" to receive all events with the given prefix
+                - Suffix wildcard "*.suffix" to receive all events with the given suffix
             handler: Function to call when an event of this type is published
 
         Returns:
@@ -54,6 +55,9 @@ class EventBus:
             
             # Subscribe to all player events
             bus.subscribe("player.*", on_any_player_event)
+            
+            # Subscribe to all error events
+            bus.subscribe("*.error", on_any_error_event)
             
             # Subscribe to all events
             bus.subscribe("*", on_any_event)
@@ -109,14 +113,16 @@ class EventBus:
             event: The event to dispatch
 
         Note:
-            This method supports two types of wildcard subscriptions:
+            This method supports three types of wildcard subscriptions:
             1. Global wildcard "*" which will receive all events regardless of type
             2. Prefix wildcard "prefix.*" which will receive all events with the given prefix
+            3. Suffix wildcard "*.suffix" which will receive all events with the given suffix
 
             The event is dispatched to handlers in this order:
             1. Exact type match subscribers
             2. Prefix wildcard subscribers
-            3. Global wildcard subscribers
+            3. Suffix wildcard subscribers
+            4. Global wildcard subscribers
         """
         # Notify specific event type subscribers
         if event.type in self.subscribers:
@@ -126,6 +132,12 @@ class EventBus:
         # Notify prefix wildcard subscribers (e.g., "user.*")
         for pattern, handlers in self.subscribers.items():
             if pattern.endswith(".*") and event.type.startswith(pattern[:-1]):
+                for handler in handlers:
+                    handler(event)
+                    
+        # Notify suffix wildcard subscribers (e.g., "*.error")
+        for pattern, handlers in self.subscribers.items():
+            if pattern.startswith("*.") and event.type.endswith(pattern[1:]):
                 for handler in handlers:
                     handler(event)
 

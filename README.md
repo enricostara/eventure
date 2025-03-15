@@ -195,23 +195,27 @@ unsubscribe()
 
 #### Wildcard Event Subscriptions
 
-Eventure supports powerful wildcard subscriptions that allow handlers to receive multiple types of events:
+Eventure supports three powerful wildcard subscription patterns that allow handlers to receive multiple types of events:
 
 ```python
 # Exact match subscription
 bus.subscribe("player.move", on_player_move)
 
-# Prefix wildcard subscription - receives all player events
-bus.subscribe("player.*", on_any_player_event)
+# Prefix wildcard - receives all events with a specific prefix
+bus.subscribe("player.*", on_any_player_event)  # player.move, player.attack, etc.
 
-# Global wildcard subscription - receives ALL events
+# Suffix wildcard - receives all events with a specific suffix
+bus.subscribe("*.error", on_any_error_event)  # network.error, auth.error, etc.
+
+# Global wildcard - receives ALL events
 bus.subscribe("*", on_any_event)
 ```
 
 When multiple handlers match an event, they are called in order of specificity:
 1. Exact match handlers
 2. Prefix wildcard handlers
-3. Global wildcard handlers
+3. Suffix wildcard handlers
+4. Global wildcard handlers
 
 This hierarchical dispatch system allows for both specific and general event handling, making it easy to implement logging, debugging, or cross-cutting concerns.
 
