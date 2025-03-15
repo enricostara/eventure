@@ -30,6 +30,48 @@ A powerful event-driven framework for simulations, games, and complex systems wi
   - Extensive test coverage
   - Detailed documentation
 
+## Core Concepts
+
+### Tick-Based Architecture
+
+Eventure uses a tick-based architecture that provides several key advantages:
+
+1. **Deterministic Execution**
+   - Events within a tick are processed in a consistent, predictable order
+   - Eliminates race conditions and timing-related bugs
+   - Makes debugging significantly easier with reproducible scenarios
+
+2. **Perfect State Reconstruction**
+   - Any historical state can be precisely reconstructed by replaying events
+   - Enables powerful debugging, testing, and analysis capabilities
+   - Simplifies save/load functionality - just save events up to the current tick
+
+3. **Simplified Testing**
+   - Tests become deterministic and reproducible
+   - Easy to write assertions about the state at specific ticks
+   - Test complex event cascades with confidence
+
+4. **Performance Optimization**
+   - Events can be batched and processed efficiently within ticks
+   - Natural support for parallel processing of events
+   - Reduced overhead compared to continuous time systems
+
+5. **Flexible Simulation Control**
+   - Easily implement pause, step-forward, or fast-forward functionality
+   - Run simulations at different speeds without affecting logic
+   - Perfect for debugging complex scenarios or analyzing specific moments
+
+```python
+# Example: Using ticks for deterministic ordering
+log.add_event("market.price_update", {"price": 100})  # Tick 1
+log.advance_tick()
+log.add_event("trading.buy_order", {"amount": 10})    # Tick 2
+
+# Example: Getting state at a specific point in time
+events_at_tick_5 = query.get_events_at_tick(5)
+state_at_tick_5 = derive_game_state([e for e in log.events if e.tick <= 5])
+```
+
 ## Installation
 
 ```bash
@@ -356,53 +398,6 @@ def combat_handler(event):
 
 # Subscribe to events
 bus.subscribe("combat.attack", combat_handler)
-```
-
-### Benefits of Tick-Based Architecture
-
-Eventure's tick-based system provides several key advantages for developers:
-
-1. **Deterministic Execution**
-   - Events within a tick are processed in a consistent, predictable order
-   - Eliminates race conditions and timing-related bugs
-   - Makes debugging significantly easier with reproducible scenarios
-
-2. **Perfect State Reconstruction**
-   - Any historical state can be precisely reconstructed by replaying events
-   - Enables powerful debugging, testing, and analysis capabilities
-   - Simplifies save/load functionality - just save events up to the current tick
-
-3. **Simplified Testing**
-   - Tests become deterministic and reproducible
-   - Easy to write assertions about the state at specific ticks
-   - Test complex event cascades with confidence
-
-4. **Performance Optimization**
-   - Events can be batched and processed efficiently within ticks
-   - Natural support for parallel processing of events
-   - Reduced overhead compared to continuous time systems
-
-5. **Flexible Simulation Control**
-   - Easily implement pause, step-forward, or fast-forward functionality
-   - Run simulations at different speeds without affecting logic
-   - Perfect for debugging complex scenarios or analyzing specific moments
-
-```python
-# Example: Using ticks for deterministic ordering
-log.add_event("market.price_update", {"price": 100})  # Tick 1
-log.advance_tick()
-log.add_event("trading.buy_order", {"amount": 10})    # Tick 2
-
-# Example: Getting state at a specific point in time
-events_at_tick_5 = query.get_events_at_tick(5)
-state_at_tick_5 = derive_game_state([e for e in log.events if e.tick <= 5])
-
-# Example: Stepping through simulation
-for tick in range(1, 10):
-    # Process only events for this tick
-    current_events = query.get_events_at_tick(tick)
-    process_events(current_events)
-    visualize_state()  # Show the state after each tick
 ```
 
 ## API Reference
