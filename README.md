@@ -449,18 +449,18 @@ tick_5_events = [e for e in log.events if e.tick <= 5]
 historical_state = derive_game_state(tick_5_events)
 ```
 
-### Custom Event Handlers with EventBus
+### Event Cascading with Parent References
 
 ```python
-# Create specialized handlers
+# Create a handler that triggers follow-up events
 def combat_handler(event):
     if event.data.get("enemy_health", 0) <= 0:
-        # Generate a cascade event
+        # Generate a cascade event based on the original event
         bus.publish("enemy.defeated", 
                    {"enemy": event.data["enemy"]},
-                   parent_event=event)
+                   parent_event=event)  # Parent reference maintains event chain
 
-# Subscribe to events
+# Subscribe to combat events
 bus.subscribe("combat.attack", combat_handler)
 ```
 

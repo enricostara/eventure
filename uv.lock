@@ -175,7 +175,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/a2/ce/5d6a3782b9f88097c
 
 [[package]]
 name = "eventure"
-version = "0.4.1"
+version = "0.4.2"
 source = { editable = "." }
 
 [package.dev-dependencies]
