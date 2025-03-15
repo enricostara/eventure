@@ -248,6 +248,72 @@ query.print_single_cascade(root_event)
 query.print_event_details(event)
 ```
 
+## Event Visualization Examples
+
+The EventQuery API provides powerful visualization capabilities for event cascades. Here are some examples from the included Adventure Game example:
+
+#### Room Entry and Combat Sequence
+
+```
+┌─── TICK 4 ───┐
+│
+  ↓ room.enter (caused by: player.move @ tick 3)
+    ID: 4-FADA-1
+    Data:
+      room: treasury
+      description: Glittering treasures fill this heavily guarded room.
+    │
+    └─ enemy.encounter
+    │ ID: 4-ADCF-1
+    │ Data:
+    │   enemy: dragon
+    │   message: A dragon appears before you!
+└───────────────┘
+
+┌─── TICK 5 ───┐
+│
+  ↓ combat.start (caused by: enemy.encounter @ tick 4)
+    ID: 5-ABAA-1
+    Data:
+      enemy: dragon
+      enemy_health: 100
+      message: Combat with dragon begins!
+│
+  ↓ combat.round (caused by: enemy.encounter @ tick 4)
+    ID: 5-BDBB-1
+    Data:
+      enemy: dragon
+      round: 1
+      message: Round 1 against dragon!
+    │
+    └─ combat.damage_dealt
+    │ ID: 5-DDDF-1
+    │ Data:
+    │   enemy: dragon
+    │   amount: 18
+    │   message: You hit the dragon for 18 damage!
+└───────────────┘
+```
+
+This visualization shows:
+- Events organized by tick
+- Parent-child relationships with indentation
+- Causal connections between events (shown with arrows)
+- Complete event data for analysis
+
+To generate these visualizations in your code:
+
+```python
+# Print all events in the log organized by tick
+query.print_event_cascade()
+
+# Print a specific cascade starting from a root event
+query.print_single_cascade(root_event)
+
+# Print details of a single event
+query.print_event_details(event)
+```
+
 ## Advanced Usage
 
 ### Event Replay and State Reconstruction
