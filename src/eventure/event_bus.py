@@ -38,11 +38,26 @@ class EventBus:
         """Subscribe a handler to a specific event type.
 
         Args:
-            event_type: The type of event to subscribe to as a string
+            event_type: The type of event to subscribe to as a string.
+                Supports two types of wildcards:
+                - Global wildcard "*" to receive all events regardless of type
+                - Prefix wildcard "prefix.*" to receive all events with the given prefix
             handler: Function to call when an event of this type is published
 
         Returns:
             A function that can be called to unsubscribe the handler
+            
+        Examples:
+            ```python
+            # Subscribe to a specific event type
+            bus.subscribe("player.move", on_player_move)
+            
+            # Subscribe to all player events
+            bus.subscribe("player.*", on_any_player_event)
+            
+            # Subscribe to all events
+            bus.subscribe("*", on_any_event)
+            ```
         """
         if event_type not in self.subscribers:
             self.subscribers[event_type] = []

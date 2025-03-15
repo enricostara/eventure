@@ -184,6 +184,7 @@ unsubscribe = bus.subscribe("user.login", on_login)
 # Subscribe with wildcards
 bus.subscribe("user.*", lambda e: print(f"User event: {e.type}"))
 bus.subscribe("*.error", lambda e: print(f"Error: {e.data['message']}"))
+bus.subscribe("*", lambda e: print(f"Any event: {e.type}"))
 
 # Publish events
 bus.publish("user.login", {"user_id": 456})
@@ -191,6 +192,28 @@ bus.publish("user.login", {"user_id": 456})
 # Unsubscribe when done
 unsubscribe()
 ```
+
+#### Wildcard Event Subscriptions
+
+Eventure supports powerful wildcard subscriptions that allow handlers to receive multiple types of events:
+
+```python
+# Exact match subscription
+bus.subscribe("player.move", on_player_move)
+
+# Prefix wildcard subscription - receives all player events
+bus.subscribe("player.*", on_any_player_event)
+
+# Global wildcard subscription - receives ALL events
+bus.subscribe("*", on_any_event)
+```
+
+When multiple handlers match an event, they are called in order of specificity:
+1. Exact match handlers
+2. Prefix wildcard handlers
+3. Global wildcard handlers
+
+This hierarchical dispatch system allows for both specific and general event handling, making it easy to implement logging, debugging, or cross-cutting concerns.
 
 ### EventQuery
 
