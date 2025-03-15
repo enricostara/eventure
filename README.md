@@ -53,7 +53,6 @@ Eventure uses a tick-based architecture that provides several key advantages:
 
 4. **Performance Optimization**
    - Events can be batched and processed efficiently within ticks
-   - Natural support for parallel processing of events
    - Reduced overhead compared to continuous time systems
 
 5. **Flexible Simulation Control**
