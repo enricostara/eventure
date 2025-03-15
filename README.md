@@ -72,6 +72,43 @@ events_at_tick_5 = query.get_events_at_tick(5)
 state_at_tick_5 = derive_game_state([e for e in log.events if e.tick <= 5])
 ```
 
+### Event Cascade System
+
+Eventure's event cascade system tracks relationships between events, providing several powerful capabilities:
+
+1. **Causal Tracking**
+   - Every event can have a parent event that triggered it
+   - Complete traceability from cause to effect
+   - Understand complex chains of interactions
+
+2. **Debugging and Analysis**
+   - Trace the root cause of any system behavior
+   - Visualize complete event cascades
+   - Identify unexpected side effects or event chains
+
+3. **Rich Query Capabilities**
+   - Filter events by their relationships
+   - Find all events triggered by a specific root event
+   - Analyze patterns in event propagation
+
+4. **System Understanding**
+   - Map complex interactions between system components
+   - Document emergent behaviors
+   - Improve system design through relationship analysis
+
+```python
+# Creating related events
+def on_enemy_defeated(event):
+    # This event will be linked to the parent event
+    bus.publish("treasure.drop", {"item": "gold_coins"}, parent_event=event)
+    bus.publish("experience.gain", {"amount": 100}, parent_event=event)
+
+# Querying related events
+root_event = query.get_event_by_id("0-ABCD-1")
+cascade = query.get_cascade(root_event)  # All events triggered by this event
+query.print_single_cascade(root_event)   # Visualize the cascade
+```
+
 ## Installation
 
 ```bash
