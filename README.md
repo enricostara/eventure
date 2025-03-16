@@ -16,6 +16,12 @@ A powerful event-driven framework for simulations, games, and complex systems wi
   - State reconstruction at any point in time
   - Parent-child relationships for complete cascade tracking
 
+- **Tick-Based System**
+  - Deterministic event processing with precise ordering
+  - Discrete time increments for simulations and games
+  - Easy state snapshots at specific tick boundaries
+  - Simplified debugging and testing through reproducibility
+
 - **Advanced Event Querying**
   - Filter events by type, data content, or relationships
   - Analyze event cascades and parent-child structures
