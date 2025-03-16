@@ -71,6 +71,27 @@ events_at_tick_5 = query.get_events_at_tick(5)
 state_at_tick_5 = derive_game_state([e for e in log.events if e.tick <= 5])
 ```
 
+### Event Sourcing Architecture
+
+Eventure is built on the event sourcing architectural pattern, which means:
+
+1. **Events as the Source of Truth**
+   - All state changes are represented as immutable events
+   - The sequence of events becomes the authoritative record
+   - Current state is derived by replaying the event history
+
+2. **Implementation in Eventure**
+   - `EventLog`: Serves as the event store, maintaining the complete event history
+   - `Event` objects: Immutable records with type, data, tick, and relationship information
+   - State derivation: Game or application state is reconstructed by replaying events
+   - `EventQuery`: Provides powerful tools to analyze and understand the event history
+
+3. **Benefits in Practice**
+   - Complete audit trail for debugging and analysis
+   - Time-travel capabilities through historical state reconstruction
+   - Simplified testing through deterministic event replay
+   - Natural support for undo/redo and save/load features
+
 ### Event Cascade System
 
 Eventure's event cascade system tracks relationships between events, providing several powerful capabilities:
