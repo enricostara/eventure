@@ -4,21 +4,23 @@ A powerful event-driven framework for simulations, games, and complex systems wi
 
 ## Features
 
-- **Event Management**
-  - Immutable events with tick, timestamp, type, data, and unique ID attributes
-  - Parent-child relationships between events for cascade tracking
+- **Event Driven**
+  - Decouple components through publish-subscribe patterns
+  - EventBus with flexible wildcard subscription support
+  - Immutable events with type, data, and metadata
   - JSON serialization for persistence and network transmission
 
-- **Event Log & Bus**
-  - EventLog: Track, save, and replay sequences of events
-  - EventBus: Decouple event producers from consumers with wildcard subscriptions
-  - Game state reconstruction through deterministic event replay
+- **Event Sourcing**
+  - Events as the single source of truth for all state changes
+  - Complete event history with EventLog as the persistent store
+  - State reconstruction at any point in time
+  - Parent-child relationships for complete cascade tracking
 
 - **Advanced Event Querying**
   - Filter events by type, data content, or relationships
   - Analyze event cascades and parent-child structures
   - Count, group, and visualize events with detailed formatting
-  - Query events by tick, root events, and other criteria
+  - Historical state access through tick-based event queries
 
 - **Ready-to-Use Examples**
   - Cryptocurrency Trading Bot: Financial simulation with market events
@@ -28,9 +30,46 @@ A powerful event-driven framework for simulations, games, and complex systems wi
   - Type-safe API with comprehensive type hints
   - Zero dependencies (pure Python implementation)
   - Extensive test coverage
-  - Detailed documentation
+  - Detailed documentation with practical examples
 
 ## Core Concepts
+
+### Event Driven Architecture
+
+Eventure implements a classic event-driven architecture pattern, providing:
+
+1. **Publish-Subscribe Model**
+   - Publishers emit events without knowledge of subscribers
+   - Subscribers register interest in specific event types
+   - Complete decoupling between system components
+
+2. **EventBus Implementation**
+   - Central event dispatcher connecting publishers and subscribers
+   - Flexible wildcard subscription system (`prefix.*`, `*.suffix`, `*`)
+   - Type-based routing with predictable delivery order
+
+3. **Practical Benefits**
+   - Highly modular and extensible system design
+   - Components can be developed, tested, and deployed independently
+   - Easy to add new functionality without modifying existing code
+   - Reduced complexity through clear separation of concerns
+
+```python
+# Creating an event bus
+bus = EventBus()
+
+# Subscribing to events
+def on_market_update(event):
+    print(f"Market updated: {event.data['price']}")
+
+unsubscribe = bus.subscribe("market.update", on_market_update)
+
+# Publishing an event
+bus.publish("market.update", {"price": 100.25})
+
+# Later: unsubscribe when no longer needed
+unsubscribe()
+```
 
 ### Event Sourcing Architecture
 
