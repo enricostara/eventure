@@ -32,45 +32,6 @@ A powerful event-driven framework for simulations, games, and complex systems wi
 
 ## Core Concepts
 
-### Tick-Based Architecture
-
-Eventure uses a tick-based architecture that provides several key advantages:
-
-1. **Deterministic Execution**
-   - Events within a tick are processed in a consistent, predictable order
-   - Eliminates race conditions and timing-related bugs
-   - Makes debugging significantly easier with reproducible scenarios
-
-2. **Perfect State Reconstruction**
-   - Any historical state can be precisely reconstructed by replaying events
-   - Enables powerful debugging, testing, and analysis capabilities
-   - Simplifies save/load functionality - just save events up to the current tick
-
-3. **Simplified Testing**
-   - Tests become deterministic and reproducible
-   - Easy to write assertions about the state at specific ticks
-   - Test complex event cascades with confidence
-
-4. **Performance Optimization**
-   - Events can be batched and processed efficiently within ticks
-   - Reduced overhead compared to continuous time systems
-
-5. **Flexible Simulation Control**
-   - Easily implement pause, step-forward, or fast-forward functionality
-   - Run simulations at different speeds without affecting logic
-   - Perfect for debugging complex scenarios or analyzing specific moments
-
-```python
-# Example: Using ticks for deterministic ordering
-log.add_event("market.price_update", {"price": 100})  # Tick 1
-log.advance_tick()
-log.add_event("trading.buy_order", {"amount": 10})    # Tick 2
-
-# Example: Getting state at a specific point in time
-events_at_tick_5 = query.get_events_at_tick(5)
-state_at_tick_5 = derive_game_state([e for e in log.events if e.tick <= 5])
-```
-
 ### Event Sourcing Architecture
 
 Eventure is built on the event sourcing architectural pattern, which means:
@@ -89,8 +50,47 @@ Eventure is built on the event sourcing architectural pattern, which means:
 3. **Benefits in Practice**
    - Complete audit trail for debugging and analysis
    - Time-travel capabilities through historical state reconstruction
-   - Simplified testing through deterministic event replay
    - Natural support for undo/redo and save/load features
+   - Perfect reproducibility of any system state
+
+```python
+# Example: State reconstruction from events
+events = log.get_events_until_tick(5)
+state_at_tick_5 = derive_game_state(events)
+
+# Restore game to a previous state
+historical_state = derive_game_state(events_until_save_point)
+```
+
+### Tick-Based System
+
+Eventure uses a tick-based system that provides several key advantages:
+
+1. **Deterministic Execution**
+   - Events within a tick are processed in a consistent, predictable order
+   - Eliminates race conditions and timing-related bugs
+   - Makes debugging significantly easier with reproducible scenarios
+
+2. **Discrete Time Steps**
+   - Game time advances in well-defined increments
+   - Each tick represents a clear, isolated state transition
+   - Multiple events can be processed within a single tick
+
+3. **Performance Optimization**
+   - Events can be batched and processed efficiently within ticks
+   - Reduced overhead compared to continuous time systems
+
+4. **Flexible Simulation Control**
+   - Easily implement pause, step-forward, or fast-forward functionality
+   - Run simulations at different speeds without affecting logic
+   - Perfect for debugging complex scenarios or analyzing specific moments
+
+```python
+# Example: Using ticks for deterministic ordering
+log.add_event("market.price_update", {"price": 100})  # Tick 1
+log.advance_tick()
+log.add_event("trading.buy_order", {"amount": 10})    # Tick 2
+```
 
 ### Event Cascade System
 
@@ -119,14 +119,13 @@ Eventure's event cascade system tracks relationships between events, providing s
 ```python
 # Creating related events
 def on_enemy_defeated(event):
-    # This event will be linked to the parent event
+    # These events will be linked to the parent event
     bus.publish("treasure.drop", {"item": "gold_coins"}, parent_event=event)
     bus.publish("experience.gain", {"amount": 100}, parent_event=event)
 
 # Querying related events
-root_event = query.get_event_by_id("0-ABCD-1")
-cascade = query.get_cascade(root_event)  # All events triggered by this event
-query.print_single_cascade(root_event)   # Visualize the cascade
+root_event = query.get_event_by_id("evt_123")
+cascade_events = query.get_cascade_events(root_event)
 ```
 
 ## Installation
