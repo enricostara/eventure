@@ -111,7 +111,7 @@ Eventure uses a tick-based system that provides several key advantages:
    - Makes debugging significantly easier with reproducible scenarios
 
 2. **Discrete Time Steps**
-   - Game time advances in well-defined increments
+   - Game or simulation time advances in well-defined increments
    - Each tick represents a clear, isolated state transition
    - Multiple events can be processed within a single tick
 
