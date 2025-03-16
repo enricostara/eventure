@@ -1,6 +1,6 @@
 # Eventure
 
-A powerful event-driven framework for simulations, games, and complex systems with comprehensive event tracking, querying, and analysis capabilities.
+A powerful event-driven framework for simulations, games, and complex systems with comprehensive event sourcing, querying, and analysis capabilities.
 
 ## Features
 
